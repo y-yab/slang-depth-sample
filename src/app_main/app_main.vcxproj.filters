@@ -7,6 +7,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="app.cpp" />
+    <ClCompile Include="pch.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="app.h" />
+    <ClInclude Include="logger_helper.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,17 @@
+<Project>
+  <Import Project="$(SolutionDir)Directory.Build.props" />
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)src\app_main;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!-- Compiler Configuration -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PrecompiledMode>false</PrecompiledMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>
