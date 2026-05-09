@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36915.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "slang_depth_sample", "src\slang_depth_sample\slang_depth_sample.vcxproj", "{F9562E27-3AD2-4EED-8F70-3ECBD343DF82}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F9562E27-3AD2-4EED-8F70-3ECBD343DF82}.Debug|x64.ActiveCfg = Debug|x64
+		{F9562E27-3AD2-4EED-8F70-3ECBD343DF82}.Debug|x64.Build.0 = Debug|x64
+		{F9562E27-3AD2-4EED-8F70-3ECBD343DF82}.Release|x64.ActiveCfg = Release|x64
+		{F9562E27-3AD2-4EED-8F70-3ECBD343DF82}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6D4483C9-6434-4BED-A67A-F5D741F091DC}
+	EndGlobalSection
+EndGlobal
