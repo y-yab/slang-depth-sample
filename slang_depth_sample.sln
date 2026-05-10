@@ -7,6 +7,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "slang_depth_sample", "src\s
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_main", "src\app_main\app_main.vcxproj", "{88234438-9B5E-47CA-823B-2544F9021D82}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{DDB4EF12-CC4E-5E88-E6FC-71A802F4DE97}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_app_main", "tests\test_app_main\test_app_main.vcxproj", "{6230B5CF-193C-4CDE-8BA7-FE22EA39A281}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,9 +25,16 @@ Global
 		{88234438-9B5E-47CA-823B-2544F9021D82}.Debug|x64.Build.0 = Debug|x64
 		{88234438-9B5E-47CA-823B-2544F9021D82}.Release|x64.ActiveCfg = Release|x64
 		{88234438-9B5E-47CA-823B-2544F9021D82}.Release|x64.Build.0 = Release|x64
+		{6230B5CF-193C-4CDE-8BA7-FE22EA39A281}.Debug|x64.ActiveCfg = Debug|x64
+		{6230B5CF-193C-4CDE-8BA7-FE22EA39A281}.Debug|x64.Build.0 = Debug|x64
+		{6230B5CF-193C-4CDE-8BA7-FE22EA39A281}.Release|x64.ActiveCfg = Release|x64
+		{6230B5CF-193C-4CDE-8BA7-FE22EA39A281}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6230B5CF-193C-4CDE-8BA7-FE22EA39A281} = {DDB4EF12-CC4E-5E88-E6FC-71A802F4DE97}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6D4483C9-6434-4BED-A67A-F5D741F091DC}
