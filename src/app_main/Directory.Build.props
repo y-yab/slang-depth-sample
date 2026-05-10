@@ -1,0 +1,10 @@
+<Project>
+  <Import Project="$(SolutionDir)Directory.Build.props" />
+
+  <ItemDefinitionGroup>
+    <PostBuildEvent>
+      <Command>xcopy /Y /D "$(SolutionDir)vcpkg_installed\x64-windows\x64-windows\$(Configuration)\bin\slang-*.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+
+</Project>

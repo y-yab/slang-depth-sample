@@ -4,6 +4,7 @@
     "cppwinrt",
     "directx-headers",
     "directx-dxc",
+    "fmt",
     "gtest",
     "magic-enum",
     "shader-slang",

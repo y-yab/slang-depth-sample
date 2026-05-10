@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "app.h"
+#include "slang_context.h"
 #include "logger_helper.h"
 #include "utils.h"
 #include "window.h"
@@ -51,13 +52,20 @@ App::App() : impl_(std::make_shared<Impl>()) {}
 App::~App() = default;
 
 int App::Run() {
-  Window window{ kAppName, 1280, 720 };
+  Size window_size{1280, 720};
+
+  Window window{ kAppName, window_size.width, window_size.height };
   window.AddWindowEventHandler(impl_);
   window.Show();
 
+  SlangContext context(window.GetWindowHandle(), window_size);
+
+  // Main loop
   SPDLOG_INFO("Entering main loop");
   while (impl_->running_) {
-    // Main loop
+    auto frame_context = context.BeginFrame();
+    context.EndFrame();
+
     window.ProcessEvent();
   }
   SPDLOG_INFO("Exiting main loop");

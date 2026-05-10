@@ -77,6 +77,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="slang_context.cpp" />
+    <ClCompile Include="slang_debug_printer.cpp" />
+    <ClCompile Include="slang_helper.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -84,6 +87,10 @@
     <ClInclude Include="logger_helper.h" />
     <ClInclude Include="non_copyable.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="slang_context.h" />
+    <ClInclude Include="slang_debug_printer.h" />
+    <ClInclude Include="slang_helper.h" />
+    <ClInclude Include="types.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="window.h" />
     <ClInclude Include="window_event_handler.h" />
