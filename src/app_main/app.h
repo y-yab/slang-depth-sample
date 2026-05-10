@@ -1,10 +1,12 @@
 ﻿#pragma once
 
+#include "non_copyable.h"
+
 #include <memory>
 
 namespace yab {
 
-class App {
+class App : NonCopyable {
 public:
   App();
   ~App();
@@ -13,7 +15,7 @@ public:
 
 private:
   struct Impl;
-  std::unique_ptr<Impl> impl_;
+  std::shared_ptr<Impl> impl_;
 };
 
 } // namespace yab

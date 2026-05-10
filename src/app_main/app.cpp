@@ -2,11 +2,22 @@
 #include "app.h"
 #include "logger_helper.h"
 #include "utils.h"
+#include "window.h"
+#include "window_event_handler.h"
+
+#include <atomic>
 
 using namespace yab;
 
-struct App::Impl {
+namespace {
+
+constexpr auto kAppName = L"Slang Depth Sample";
+
+} // namespace (anonymous)
+
+struct App::Impl : public IWindowEventHandler {
   std::unique_ptr<LoggerRAII> logger_raii_;
+  std::atomic<bool> running_{true};
 
   Impl() {
     auto exe_dir = Util::GetExecutionDir();
@@ -22,11 +33,34 @@ struct App::Impl {
   ~Impl() {
     SPDLOG_INFO("App End");
   }
+
+  void OnWindowClose() override {
+    running_ = false;
+  }
+  void OnKeyboard(uint32_t key_code, bool is_keydown) override {
+  }
+  void OnMouseButton(MouseButton button, MouseAction action, float x, float y) override {
+  }
+  void OnMouseMove(float x, float y) override {
+  }
+  void OnMouseWheel(float delta) override {
+  }
 };
 
-App::App() : impl_(std::make_unique<Impl>()) {}
+App::App() : impl_(std::make_shared<Impl>()) {}
 App::~App() = default;
 
 int App::Run() {
+  Window window{ kAppName, 1280, 720 };
+  window.AddWindowEventHandler(impl_);
+  window.Show();
+
+  SPDLOG_INFO("Entering main loop");
+  while (impl_->running_) {
+    // Main loop
+    window.ProcessEvent();
+  }
+  SPDLOG_INFO("Exiting main loop");
+
   return 0;
 }

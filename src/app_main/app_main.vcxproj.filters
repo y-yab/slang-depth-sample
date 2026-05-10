@@ -9,11 +9,15 @@
   <ItemGroup>
     <ClCompile Include="app.cpp" />
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.h" />
     <ClInclude Include="logger_helper.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="utils.h" />
+    <ClInclude Include="window.h" />
+    <ClInclude Include="window_event_handler.h" />
+    <ClInclude Include="non_copyable.h" />
   </ItemGroup>
 </Project>
