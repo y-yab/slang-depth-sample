@@ -38,6 +38,8 @@ struct App::Impl : public IWindowEventHandler {
   void OnWindowClose() override {
     running_ = false;
   }
+  void OnWindowMove(int32_t x, int32_t y) override {}
+  void OnWindowResize(uint32_t width, uint32_t height) override {}
   void OnKeyboard(uint32_t key_code, bool is_keydown) override {
   }
   void OnMouseButton(MouseButton button, MouseAction action, float x, float y) override {
@@ -54,7 +56,13 @@ App::~App() = default;
 int App::Run() {
   Size window_size{1280, 720};
 
-  Window window{ kAppName, window_size.width, window_size.height };
+  Window window({
+    kAppName,
+    {0, 0, window_size.width, window_size.height},
+    false, // fullscreen
+    false, // topmost
+    true,  // hook_f10key
+  });
   window.AddWindowEventHandler(impl_);
   window.Show();
 
