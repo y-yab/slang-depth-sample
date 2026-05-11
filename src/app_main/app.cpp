@@ -66,13 +66,15 @@ int App::Run() {
   window.AddWindowEventHandler(impl_);
   window.Show();
 
-  SlangContext context(window.GetWindowHandle(), window_size);
+  SlangContext context(
+    window.GetWindowHandle(), window_size, Util::GetExecutionDir() / "shaders");
 
   // Main loop
   SPDLOG_INFO("Entering main loop");
   while (impl_->running_) {
     auto frame_context = context.BeginFrame();
-    context.EndFrame();
+    context.EndFrame(frame_context);
+    context.Present();
 
     window.ProcessEvent();
   }

@@ -8,7 +8,11 @@
 #include <cmath>
 #include <vector>
 
-namespace yab {
+namespace {
+
+constexpr auto kTargetProfile = "sm_6_1";
+
+namespace detail {
 
 static constexpr auto kTargetProfile = "sm_6_1";
 
@@ -72,7 +76,8 @@ public:
   }
 };
 
-}
+} // namespace detail
+} // namespace (anonymous)
 
 using namespace yab;
 using namespace sgl;
@@ -84,7 +89,7 @@ Slang::ComPtr<rhi::IDevice> SlangHelper::CreateDevice() {
 #ifdef _DEBUG
   rhi::getRHI()->enableDebugLayers();
   desc.enableValidation = true;
-  desc.debugCallback = DebugCallback::GetInstance();
+  desc.debugCallback = detail::DebugCallback::GetInstance();
 #endif
 
   std::array<slang::CompilerOptionEntry, 2> options{ {
@@ -96,4 +101,44 @@ Slang::ComPtr<rhi::IDevice> SlangHelper::CreateDevice() {
   desc.slang.compilerOptionEntryCount = static_cast<uint32_t>(options.size());
 
   return rhi::getRHI()->createDevice(desc);
+}
+
+Slang::ComPtr<slang::ISession> SlangHelper::CreateSession(
+  slang::IGlobalSession* global_session, const std::filesystem::path& shader_path)
+{
+  Slang::ComPtr<slang::ISession> session;
+
+  if (!global_session) {
+    return session;
+  }
+
+  detail::Strings search_paths;
+  search_paths.Append(shader_path.string());
+  search_paths.Finalize();
+
+  slang::TargetDesc target_desc{};
+  target_desc.format = SLANG_DXIL;
+  target_desc.profile = global_session->findProfile(kTargetProfile);
+
+  std::array<slang::PreprocessorMacroDesc, 1> macros{ {
+    #ifdef _DEBUG
+    {"SGL_ENABLE_PRINT", "1"},
+    #else
+    {"SGL_ENABLE_PRINT", "0"},
+    #endif
+  } };
+
+  slang::SessionDesc session_desc{};
+  session_desc.searchPathCount = static_cast<uint32_t>(search_paths.Size());
+  session_desc.searchPaths = search_paths.Data();
+  session_desc.preprocessorMacroCount = static_cast<uint32_t>(macros.size());
+  session_desc.preprocessorMacros = macros.data();
+  session_desc.targetCount = 1;
+  session_desc.targets = &target_desc;
+
+  CHECKSLANG(
+    global_session->createSession(session_desc, session.writeRef()),
+    "Failed to create Slang session");
+
+  return session;
 }

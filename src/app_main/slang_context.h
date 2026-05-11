@@ -3,32 +3,43 @@
 #include "non_copyable.h"
 #include "types.h"
 
+#include <slang-rhi.h>
+
+#include <filesystem>
 #include <memory>
 #include <stdint.h>
 #include <windef.h>
-
-namespace rhi {
-class IDevice;
-class ICommandEncoder;
-class ITexture;
-}
 
 namespace yab {
 
 class SlangContext : public NonCopyable {
 public:
   struct FrameContext {
-    rhi::ICommandEncoder* command_encoder = nullptr;
-    rhi::ITexture* render_target = nullptr;
+    Slang::ComPtr<rhi::ICommandEncoder> command_encoder;
+    Slang::ComPtr<rhi::ITexture> render_target;
+
+    bool IsValid() const { return command_encoder && render_target; }
   };
 
   SlangContext() = delete;
-  SlangContext(HWND hwnd, const Size& size);
+  SlangContext(
+    HWND hwnd, const Size& surface_size,
+    const std::filesystem::path& shader_dir);
   ~SlangContext();
 
-  rhi::IDevice* GetDevice() const;
+  Slang::ComPtr<rhi::IDevice> GetDevice() const;
+  Slang::ComPtr<slang::ISession> GetSlangSession() const;
+
+  Size GetSurfaceSize() const;
+  rhi::Format GetSurfaceFormat() const;
+
   FrameContext BeginFrame();
-  void EndFrame();
+  void EndFrame(FrameContext frame_context);
+
+  void Present();
+
+  void RefreshSession();
+  void WaitOnHost();
 
 private:
   struct Impl;

@@ -12,15 +12,26 @@ using namespace sgl;
 
 struct SlangContext::Impl {
   Slang::ComPtr<rhi::IDevice> device_;
+  Slang::ComPtr<slang::IGlobalSession> slang_global_session_;
+  Slang::ComPtr<slang::ISession> slang_session_;
   Slang::ComPtr<rhi::ICommandQueue> command_queue_;
   Slang::ComPtr<rhi::ISurface> surface_;
-  Slang::ComPtr<rhi::ICommandEncoder> current_command_encoder_;
-  Slang::ComPtr<rhi::ITexture> current_render_target_;
+  Size surface_size_;
+  rhi::Format surface_format_;
+  std::filesystem::path shader_dir_;
 
 
-  Impl(HWND hwnd, const Size& size) {
+  Impl(HWND hwnd, const Size& size, const std::filesystem::path& shader_dir)
+    : surface_size_(size), shader_dir_(shader_dir)
+  {
     // Create device
     device_ = SlangHelper::CreateDevice();
+
+    // Create Slang session
+    CHECKSLANG(
+      slang::createGlobalSession(slang_global_session_.writeRef()),
+      "Failed to create Slang global session");
+    slang_session_ = SlangHelper::CreateSession(slang_global_session_.get(), shader_dir);
 
     // Get command queue
     command_queue_ = device_->getQueue(rhi::QueueType::Graphics);
@@ -28,11 +39,12 @@ struct SlangContext::Impl {
     // Create surface
     {
       surface_ = device_->createSurface(rhi::WindowHandle::fromHwnd(hwnd));
+      surface_format_ = surface_->getInfo().preferredFormat;
 
       rhi::SurfaceConfig surface_config{};
-      surface_config.format = surface_->getInfo().preferredFormat;
-      surface_config.width = size.width;
-      surface_config.height = size.height;
+      surface_config.format = surface_format_;
+      surface_config.width = surface_size_.width;
+      surface_config.height = surface_size_.height;
       surface_config.desiredImageCount = kSwapchainImageCount;
       surface_->configure(surface_config);
     }
@@ -43,49 +55,65 @@ struct SlangContext::Impl {
   }
 
   SlangContext::FrameContext BeginFrame() {
-    current_command_encoder_ = command_queue_->createCommandEncoder();
-    current_render_target_ = surface_->acquireNextImage();
-    if (!current_command_encoder_ || !current_render_target_) {
-      current_command_encoder_ = nullptr;
-      current_render_target_ = nullptr;
-      return {};
-    }
-
-    FrameContext frame_context;
-    frame_context.command_encoder = current_command_encoder_.get();
-    frame_context.render_target = current_render_target_.get();
-    return frame_context;
+    return {
+      .command_encoder = command_queue_->createCommandEncoder(),
+      .render_target = surface_->acquireNextImage(),
+    };
   }
 
-  void EndFrame() {
-    if (!current_command_encoder_ || !current_render_target_) {
-      return;
-    }
+  void EndFrame(rhi::ICommandEncoder* command_encoder) {
+    command_queue_->submit(command_encoder->finish());
+  }
 
-    command_queue_->submit(current_command_encoder_->finish());
+  void Present() {
     surface_->present();
-
-    current_command_encoder_ = nullptr;
-    current_render_target_ = nullptr;
   }
 };
 
-SlangContext::SlangContext(HWND hwnd, const Size& size)
-  : impl_{ std::make_unique<Impl>(hwnd, size) }
+SlangContext::SlangContext(HWND hwnd, const Size& size, const std::filesystem::path& shader_dir)
+  : impl_{ std::make_unique<Impl>(hwnd, size, shader_dir) }
 {
 }
 
 SlangContext::~SlangContext() {
 }
 
-rhi::IDevice* SlangContext::GetDevice() const {
-  return impl_->device_.get();
+Slang::ComPtr<rhi::IDevice> SlangContext::GetDevice() const {
+  return impl_->device_;
+}
+
+Slang::ComPtr<slang::ISession> SlangContext::GetSlangSession() const {
+  return impl_->slang_session_;
+}
+
+Size SlangContext::GetSurfaceSize() const {
+  return impl_->surface_size_;
+}
+
+rhi::Format SlangContext::GetSurfaceFormat() const {
+  return impl_->surface_format_;
 }
 
 SlangContext::FrameContext SlangContext::BeginFrame() {
   return impl_->BeginFrame();
 }
 
-void SlangContext::EndFrame() {
-  impl_->EndFrame();
+void SlangContext::EndFrame(FrameContext frame_context) {
+  impl_->EndFrame(frame_context.command_encoder.get());
+}
+
+void SlangContext::Present() {
+  impl_->Present();
+}
+
+void SlangContext::RefreshSession() {
+  auto new_session = SlangHelper::CreateSession(
+    impl_->slang_global_session_.get(), impl_->shader_dir_);
+
+  impl_->command_queue_->waitOnHost();
+  impl_->slang_session_ = new_session;
+}
+
+void SlangContext::WaitOnHost() {
+  impl_->command_queue_->waitOnHost();
 }

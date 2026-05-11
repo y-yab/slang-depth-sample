@@ -2,6 +2,7 @@
 
 #include <slang-rhi.h>
 
+#include <filesystem>
 #include <format>
 #include <stdexcept>
 
@@ -37,6 +38,8 @@ class GPUPrinting;
 class SlangHelper {
 public:
   static Slang::ComPtr<rhi::IDevice> CreateDevice();
+  static Slang::ComPtr<slang::ISession> CreateSession(
+    slang::IGlobalSession* global_session, const std::filesystem::path& shader_path);
 };
 
 }
