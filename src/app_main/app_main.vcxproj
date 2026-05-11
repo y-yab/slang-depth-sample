@@ -81,6 +81,8 @@
     <ClCompile Include="slang_context.cpp" />
     <ClCompile Include="slang_debug_printer.cpp" />
     <ClCompile Include="slang_helper.cpp" />
+    <ClCompile Include="slang_index_buffer.cpp" />
+    <ClCompile Include="slang_vertex_buffer.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -91,6 +93,8 @@
     <ClInclude Include="slang_context.h" />
     <ClInclude Include="slang_debug_printer.h" />
     <ClInclude Include="slang_helper.h" />
+    <ClInclude Include="slang_index_buffer.h" />
+    <ClInclude Include="slang_vertex_buffer.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="window.h" />
