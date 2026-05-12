@@ -16,6 +16,7 @@ struct SlangContext::Impl {
   Slang::ComPtr<slang::ISession> slang_session_;
   Slang::ComPtr<rhi::ICommandQueue> command_queue_;
   Slang::ComPtr<rhi::ISurface> surface_;
+  Slang::ComPtr<rhi::ITexture> depth_texture_;
   Size surface_size_;
   rhi::Format surface_format_;
   std::filesystem::path shader_dir_;
@@ -48,6 +49,22 @@ struct SlangContext::Impl {
       surface_config.desiredImageCount = kSwapchainImageCount;
       surface_->configure(surface_config);
     }
+
+    // Create a persistent depth texture shared by all render passes in a frame.
+    {
+      rhi::TextureDesc depth_desc{};
+      depth_desc.type = rhi::TextureType::Texture2D;
+      depth_desc.size.width = surface_size_.width;
+      depth_desc.size.height = surface_size_.height;
+      depth_desc.size.depth = 1;
+      depth_desc.format = rhi::Format::D32Float;
+      depth_desc.usage = rhi::TextureUsage::DepthStencil;
+      depth_desc.defaultState = rhi::ResourceState::DepthWrite;
+
+      CHECKSLANG(
+        device_->createTexture(depth_desc, nullptr, depth_texture_.writeRef()),
+        "Failed to create depth texture");
+    }
   }
 
   ~Impl() {
@@ -58,6 +75,7 @@ struct SlangContext::Impl {
     return {
       .command_encoder = command_queue_->createCommandEncoder(),
       .render_target = surface_->acquireNextImage(),
+      .depth_target = depth_texture_,
     };
   }
 

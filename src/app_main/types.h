@@ -39,4 +39,10 @@ struct Pose {
   Vec4f orientation; // Quaternion (x, y, z, w)
 };
 
+struct Euler {
+  float roll;
+  float pitch;
+  float yaw;
+};
+
 } // namespace yab

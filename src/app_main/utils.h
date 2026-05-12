@@ -31,6 +31,18 @@ public:
     XMVECTOR pos = XMVectorSet(pose.position.x, pose.position.y, pose.position.z, 1.0f);
     return XMMatrixAffineTransformation({1.f, 1.f, 1.f}, XMVectorZero(), quat, pos);
   }
+
+  static DirectX::XMMATRIX ToXmMatrix(const Vec3f& position, const Euler& euler) {
+    using namespace DirectX;
+
+    XMVECTOR quat = XMQuaternionRotationRollPitchYaw(euler.pitch, euler.yaw, euler.roll);
+    XMVECTOR pos = XMVectorSet(position.x, position.y, position.z, 1.0f);
+
+    XMMATRIX rotation = XMMatrixRotationQuaternion(quat);
+    XMMATRIX translation = XMMatrixTranslationFromVector(pos);
+
+    return rotation * translation;
+  }
 };
 
 class Timer {

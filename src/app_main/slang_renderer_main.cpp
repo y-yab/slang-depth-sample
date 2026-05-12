@@ -11,11 +11,13 @@ using namespace yab;
 struct SlangRendererMain::Impl {
   std::shared_ptr<SlangContext> context_;
   std::filesystem::path shader_dir_;
-  std::unique_ptr<SlangRendererBox> box_renderer_;
+  std::unique_ptr<SlangRendererBox> box_renderer1_;
+  std::unique_ptr<SlangRendererBox> box_renderer2_;
   bool is_reverse_z_{false};
 
   Impl(std::shared_ptr<SlangContext> context) : context_(context) {
-    box_renderer_ = std::make_unique<SlangRendererBox>(context_, Vec3f{1.0f, 1.0f, 1.0f});
+    box_renderer1_ = std::make_unique<SlangRendererBox>(context_, Vec3f{0.2f, 0.2f, 8.0f});
+    box_renderer2_ = std::make_unique<SlangRendererBox>(context_, Vec3f{1.0f, 1.0f, 0.2f});
   }
 
   ~Impl() {
@@ -23,7 +25,7 @@ struct SlangRendererMain::Impl {
 
   void Render() {
     // View matrix
-    DirectX::XMVECTOR eye = DirectX::XMVectorSet(1.f, 1.f, 1.f, 1.f);
+    DirectX::XMVECTOR eye = DirectX::XMVectorSet(0.5f, 0.8f, 1.f, 1.f);
     DirectX::XMVECTOR at = DirectX::XMVectorSet(0.f, 0.f, 0.f, 1.f);
     DirectX::XMVECTOR up_dir = DirectX::XMVectorSet(0.f, 1.f, 0.f, 1.f);
     auto view = DirectX::XMMatrixLookAtLH(eye, at, up_dir);
@@ -41,11 +43,23 @@ struct SlangRendererMain::Impl {
 
     // Render box
     {
-      Pose pose{.position = { 0.f, 0.f, 0.f }, .orientation = { 0.f, 0.f, 0.f, 1.f } };
+      Pose pose{.position = { 0.f, 0.f, -3.2f }, .orientation = { 0.f, 0.f, 0.f, 1.f } };
       auto world = Util::ToXmMatrix(pose);
-      box_renderer_->Render(
+      box_renderer1_->Render(
         frame_context.command_encoder.get(),
         frame_context.render_target.get(),
+        frame_context.depth_target.get(),
+        true,
+        world, view, proj);
+    }
+    {
+      Euler rotation{ .roll = XMConvertToRadians(-90.f), .pitch = 0.f, .yaw = XMConvertToRadians(180.f) };
+      auto world = Util::ToXmMatrix({0.f, 0.f, 0.f}, rotation);
+      box_renderer2_->Render(
+        frame_context.command_encoder.get(),
+        frame_context.render_target.get(),
+        frame_context.depth_target.get(),
+        false,
         world, view, proj);
     }
 
@@ -55,7 +69,7 @@ struct SlangRendererMain::Impl {
   }
 
   void ReloadShader() {
-    box_renderer_->ReloadShader();
+    box_renderer1_->ReloadShader();
   }
 };
 

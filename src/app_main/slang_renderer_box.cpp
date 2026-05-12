@@ -129,6 +129,8 @@ struct SlangRendererBox::Impl {
   void Render(
     rhi::ICommandEncoder* encoder,
     rhi::ITexture* render_target,
+    rhi::ITexture* depth_target,
+    bool clear_attachments,
     const DirectX::XMMATRIX& world,
     const DirectX::XMMATRIX& view,
     const DirectX::XMMATRIX& proj)
@@ -140,11 +142,17 @@ struct SlangRendererBox::Impl {
 
     rhi::RenderPassColorAttachment color_attachment{};
     color_attachment.view = render_target->getDefaultView();
-    color_attachment.loadOp = rhi::LoadOp::Clear;
+    color_attachment.loadOp = clear_attachments ? rhi::LoadOp::Clear : rhi::LoadOp::Load;
+
+    rhi::RenderPassDepthStencilAttachment depth_attachment{};
+    depth_attachment.view = depth_target->getDefaultView();
+    depth_attachment.depthLoadOp = clear_attachments ? rhi::LoadOp::Clear : rhi::LoadOp::Load;
+    depth_attachment.depthStoreOp = rhi::StoreOp::Store;
 
     rhi::RenderPassDesc render_desc{};
     render_desc.colorAttachmentCount = 1;
     render_desc.colorAttachments = &color_attachment;
+    render_desc.depthStencilAttachment = &depth_attachment;
 
     auto render_encoder = encoder->beginRenderPass(render_desc);
     {
@@ -190,11 +198,20 @@ SlangRendererBox::~SlangRendererBox() {
 void SlangRendererBox::Render(
     rhi::ICommandEncoder* encoder,
     rhi::ITexture* render_target,
+    rhi::ITexture* depth_target,
+    bool clear_attachments,
     const DirectX::XMMATRIX& world,
     const DirectX::XMMATRIX& view,
     const DirectX::XMMATRIX& proj)
 {
-  impl_->Render(encoder, render_target, world, view, proj);
+  impl_->Render(
+    encoder,
+    render_target,
+    depth_target,
+    clear_attachments,
+    world,
+    view,
+    proj);
 }
 
 void SlangRendererBox::ReloadShader() {

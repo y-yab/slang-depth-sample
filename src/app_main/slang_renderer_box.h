@@ -12,6 +12,7 @@ struct XMMATRIX;
 
 namespace rhi {
 class ICommandEncoder;
+class ITexture;
 };
 
 namespace yab {
@@ -27,6 +28,8 @@ public:
   void Render(
     rhi::ICommandEncoder* encoder,
     rhi::ITexture* render_target,
+    rhi::ITexture* depth_target,
+    bool clear_attachments,
     const DirectX::XMMATRIX& world,
     const DirectX::XMMATRIX& view,
     const DirectX::XMMATRIX& proj);
