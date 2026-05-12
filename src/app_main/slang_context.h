@@ -17,9 +17,8 @@ public:
   struct FrameContext {
     Slang::ComPtr<rhi::ICommandEncoder> command_encoder;
     Slang::ComPtr<rhi::ITexture> render_target;
-    Slang::ComPtr<rhi::ITexture> depth_target;
 
-    bool IsValid() const { return command_encoder && render_target && depth_target; }
+    bool IsValid() const { return command_encoder && render_target; }
   };
 
   SlangContext() = delete;

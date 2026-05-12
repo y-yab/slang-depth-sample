@@ -11,11 +11,32 @@ using namespace yab;
 struct SlangRendererMain::Impl {
   std::shared_ptr<SlangContext> context_;
   std::filesystem::path shader_dir_;
+  Slang::ComPtr<rhi::ITexture> depth_texture_;
   std::unique_ptr<SlangRendererBox> box_renderer1_;
   std::unique_ptr<SlangRendererBox> box_renderer2_;
   bool is_reverse_z_{false};
 
   Impl(std::shared_ptr<SlangContext> context) : context_(context) {
+    // Create depth texture
+    {
+      auto device = context_->GetDevice();
+      auto surface_size_ = context_->GetSurfaceSize();
+
+      rhi::TextureDesc depth_desc{};
+      depth_desc.type = rhi::TextureType::Texture2D;
+      depth_desc.size.width = surface_size_.width;
+      depth_desc.size.height = surface_size_.height;
+      depth_desc.size.depth = 1;
+      depth_desc.format = rhi::Format::D32Float;
+      depth_desc.usage = rhi::TextureUsage::DepthStencil;
+      depth_desc.defaultState = rhi::ResourceState::DepthWrite;
+
+      CHECKSLANG(
+        device->createTexture(depth_desc, nullptr, depth_texture_.writeRef()),
+        "Failed to create depth texture");
+    }
+
+    // Create renderers
     box_renderer1_ = std::make_unique<SlangRendererBox>(context_, Vec3f{0.2f, 0.2f, 8.0f});
     box_renderer2_ = std::make_unique<SlangRendererBox>(context_, Vec3f{1.0f, 1.0f, 0.2f});
   }
@@ -48,7 +69,7 @@ struct SlangRendererMain::Impl {
       box_renderer1_->Render(
         frame_context.command_encoder.get(),
         frame_context.render_target.get(),
-        frame_context.depth_target.get(),
+        depth_texture_.get(),
         true,
         world, view, proj);
     }
@@ -58,7 +79,7 @@ struct SlangRendererMain::Impl {
       box_renderer2_->Render(
         frame_context.command_encoder.get(),
         frame_context.render_target.get(),
-        frame_context.depth_target.get(),
+        depth_texture_.get(),
         false,
         world, view, proj);
     }
@@ -70,6 +91,7 @@ struct SlangRendererMain::Impl {
 
   void ReloadShader() {
     box_renderer1_->ReloadShader();
+    box_renderer2_->ReloadShader();
   }
 };
 
