@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "types.h"
+
 #include <chrono>
 #include <filesystem>
 #include <string_view>
@@ -21,6 +23,13 @@ public:
     std::string app_file_path(_MAX_PATH - 1, '\0');
     ::GetModuleFileNameA(nullptr, app_file_path.data(), _MAX_PATH);
     return std::filesystem::path(app_file_path).parent_path();
+  }
+
+  static DirectX::XMMATRIX ToXmMatrix(const Pose& pose) {
+    using namespace DirectX;
+    XMVECTOR quat = XMVectorSet(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+    XMVECTOR pos = XMVectorSet(pose.position.x, pose.position.y, pose.position.z, 1.0f);
+    return XMMatrixAffineTransformation({1.f, 1.f, 1.f}, XMVectorZero(), quat, pos);
   }
 };
 

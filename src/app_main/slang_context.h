@@ -28,7 +28,8 @@ public:
   ~SlangContext();
 
   Slang::ComPtr<rhi::IDevice> GetDevice() const;
-  Slang::ComPtr<slang::ISession> GetSlangSession() const;
+  Slang::ComPtr<slang::ISession> GetSession() const;
+  std::filesystem::path GetShaderDir() const;
 
   Size GetSurfaceSize() const;
   rhi::Format GetSurfaceFormat() const;

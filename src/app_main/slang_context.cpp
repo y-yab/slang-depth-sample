@@ -82,8 +82,12 @@ Slang::ComPtr<rhi::IDevice> SlangContext::GetDevice() const {
   return impl_->device_;
 }
 
-Slang::ComPtr<slang::ISession> SlangContext::GetSlangSession() const {
+Slang::ComPtr<slang::ISession> SlangContext::GetSession() const {
   return impl_->slang_session_;
+}
+
+std::filesystem::path SlangContext::GetShaderDir() const {
+  return impl_->shader_dir_;
 }
 
 Size SlangContext::GetSurfaceSize() const {

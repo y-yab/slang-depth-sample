@@ -3,7 +3,11 @@
 
   <ItemDefinitionGroup>
     <PostBuildEvent>
-      <Command>xcopy /Y /D "$(SolutionDir)vcpkg_installed\x64-windows\x64-windows\$(Configuration)\bin\slang-*.dll" "$(OutDir)"</Command>
+      <Command>
+        xcopy /Y /D "$(SolutionDir)vcpkg_installed\x64-windows\x64-windows\tools\directx-dxc\dxcompiler.dll" "$(OutDir)"
+        xcopy /Y /D "$(SolutionDir)vcpkg_installed\x64-windows\x64-windows\$(Configuration)\bin\slang-*.dll" "$(OutDir)"
+        xcopy /Y /D "$(ProjectDir)shader\*.slang" "$(OutDir)shader\"
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
 

@@ -142,3 +142,101 @@ Slang::ComPtr<slang::ISession> SlangHelper::CreateSession(
 
   return session;
 }
+
+Slang::ComPtr<rhi::IRenderPipeline> SlangHelper::CreateRenderPipeline(
+  rhi::IDevice* device, slang::ISession* session,
+  const std::filesystem::path& shader_file,
+  const std::string_view& vs_entry_point_name,
+  const std::string_view& fs_entry_point_name,
+  rhi::Format render_target_format,
+  Slang::ComPtr<rhi::IInputLayout> input_layout,
+  const std::string_view& label)
+{
+  // Load shader
+  Slang::ComPtr<rhi::IShaderProgram> shader;
+  {
+    Slang::ComPtr<slang::IBlob> diagnostics;
+    auto module = session->loadModule(shader_file.string().c_str(), diagnostics.writeRef());
+    DIAGNOSESLANG(diagnostics);
+    if (!module) {
+      auto msg = std::format("Failed to load shader file({})", shader_file.string());
+      SPDLOG_ERROR(msg);
+      SlangHelper::ThrowException(msg);
+      return nullptr;
+    }
+
+    Slang::ComPtr<slang::IEntryPoint> vs;
+    CHECKSLANG(
+      module->findEntryPointByName(vs_entry_point_name.data(), vs.writeRef()),
+      "Failed to find vertex shader entry point");
+
+    Slang::ComPtr<slang::IEntryPoint> fs;
+    CHECKSLANG(
+      module->findEntryPointByName(fs_entry_point_name.data(), fs.writeRef()),
+      "Failed to find fragment shader entry point");
+
+    std::vector<slang::IComponentType*> component_types;
+    component_types.push_back(module);
+    component_types.push_back(vs.get());
+    component_types.push_back(fs.get());
+
+    Slang::ComPtr<slang::IComponentType> linked_program;
+    auto res = session->createCompositeComponentType(
+      component_types.data(),
+      component_types.size(),
+      linked_program.writeRef(),
+      diagnostics.writeRef());
+    DIAGNOSESLANG(diagnostics);
+    CHECKSLANG(res, "Failed to link shader program");
+
+    rhi::ShaderProgramDesc desc{};
+    desc.slangGlobalScope = linked_program;
+    CHECKSLANG(
+      device->createShaderProgram(desc, shader.writeRef()),
+      "Failed to create shader program");
+  }
+
+  // Create pipeline
+  Slang::ComPtr<rhi::IRenderPipeline> pipeline;
+  {
+    rhi::ColorTargetDesc color_target;
+    color_target.format = render_target_format;
+    color_target.enableBlend = true;
+    color_target.color.srcFactor = rhi::BlendFactor::SrcAlpha;
+    color_target.color.dstFactor = rhi::BlendFactor::InvSrcAlpha;
+    color_target.color.op = rhi::BlendOp::Add;
+    color_target.alpha.srcFactor = rhi::BlendFactor::One;
+    color_target.alpha.dstFactor = rhi::BlendFactor::InvSrcAlpha;
+    color_target.alpha.op = rhi::BlendOp::Add;
+
+    rhi::RenderPipelineDesc desc{};
+    desc.inputLayout = input_layout.get();
+    desc.program = shader;
+    desc.targetCount = 1;
+    desc.targets = &color_target;
+    desc.depthStencil.depthTestEnable = true;
+    desc.depthStencil.depthWriteEnable = true;
+    desc.primitiveTopology = rhi::PrimitiveTopology::TriangleList;
+    desc.rasterizer.cullMode = rhi::CullMode::Back;
+    if (!label.empty()) {
+      desc.label = label.data();
+    }
+
+    CHECKSLANG(
+      device->createRenderPipeline(desc, pipeline.writeRef()),
+      "Failed to create render pipeline");
+  }
+
+  return pipeline;
+}
+
+void SlangHelper::ThrowException(const std::string_view& message) {
+  SPDLOG_CRITICAL(message.data());
+  throw std::runtime_error(message.data());
+}
+
+void SlangHelper::Diagnose(Slang::ComPtr<slang::IBlob> diagnostics) {
+  if (diagnostics) {
+    SPDLOG_INFO("[RHI][DIAG]: {}", static_cast<const char*>(diagnostics->getBufferPointer()));
+  }
+}

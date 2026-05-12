@@ -1,8 +1,9 @@
 ﻿#include "pch.h"
 #include "app.h"
-#include "slang_context.h"
 #include "logger_helper.h"
 #include "utils.h"
+#include "slang_context.h"
+#include "slang_renderer_main.h"
 #include "window.h"
 #include "window_event_handler.h"
 
@@ -66,16 +67,15 @@ int App::Run() {
   window.AddWindowEventHandler(impl_);
   window.Show();
 
-  SlangContext context(
-    window.GetWindowHandle(), window_size, Util::GetExecutionDir() / "shaders");
+  auto context = std::make_shared<SlangContext>(
+    window.GetWindowHandle(), window_size, Util::GetExecutionDir() / "shader");
+
+  SlangRendererMain renderer(context);
 
   // Main loop
   SPDLOG_INFO("Entering main loop");
   while (impl_->running_) {
-    auto frame_context = context.BeginFrame();
-    context.EndFrame(frame_context);
-    context.Present();
-
+    renderer.Render();
     window.ProcessEvent();
   }
   SPDLOG_INFO("Exiting main loop");

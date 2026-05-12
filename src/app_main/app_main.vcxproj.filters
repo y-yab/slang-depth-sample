@@ -16,6 +16,8 @@
     <ClCompile Include="logger_helper.cpp" />
     <ClCompile Include="slang_vertex_buffer.cpp" />
     <ClCompile Include="slang_index_buffer.cpp" />
+    <ClCompile Include="slang_renderer_box.cpp" />
+    <ClCompile Include="slang_renderer_main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.h" />
@@ -31,5 +33,7 @@
     <ClInclude Include="slang_helper.h" />
     <ClInclude Include="slang_vertex_buffer.h" />
     <ClInclude Include="slang_index_buffer.h" />
+    <ClInclude Include="slang_renderer_box.h" />
+    <ClInclude Include="slang_renderer_main.h" />
   </ItemGroup>
 </Project>
