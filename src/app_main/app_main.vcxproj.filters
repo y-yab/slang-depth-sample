@@ -18,6 +18,7 @@
     <ClCompile Include="slang_index_buffer.cpp" />
     <ClCompile Include="slang_renderer_box.cpp" />
     <ClCompile Include="slang_renderer_main.cpp" />
+    <ClCompile Include="slang_renderer_texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="app.h" />
@@ -35,5 +36,6 @@
     <ClInclude Include="slang_index_buffer.h" />
     <ClInclude Include="slang_renderer_box.h" />
     <ClInclude Include="slang_renderer_main.h" />
+    <ClInclude Include="slang_renderer_texture.h" />
   </ItemGroup>
 </Project>

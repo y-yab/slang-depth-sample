@@ -20,10 +20,6 @@ constexpr auto kYellow = Color{ 1.0f, 1.0f, 0.0f, 1.0f };
 constexpr auto kCyan = Color{ 0.0f, 1.0f, 1.0f, 1.0f };
 constexpr auto kMagenta = Color{ 1.0f, 0.0f, 1.0f, 1.0f };
 
-namespace detail {
-
-
-} // namespace detail
 } // namespace (anonymous)
 
 struct SlangRendererBox::Impl {

@@ -3,6 +3,7 @@
 #include "slang_context.h"
 #include "slang_helper.h"
 #include "slang_renderer_box.h"
+#include "slang_renderer_texture.h"
 #include "utils.h"
 
 using namespace DirectX;
@@ -11,37 +12,83 @@ using namespace yab;
 struct SlangRendererMain::Impl {
   std::shared_ptr<SlangContext> context_;
   std::filesystem::path shader_dir_;
+  Slang::ComPtr<rhi::ITexture> intermediate_color_texture1_;
+  Slang::ComPtr<rhi::ITexture> intermediate_color_texture2_;
+  Slang::ComPtr<rhi::ITexture> intermediate_depth_texture1_;
+  Slang::ComPtr<rhi::ITexture> intermediate_depth_texture2_;
   Slang::ComPtr<rhi::ITexture> depth_texture_;
   std::unique_ptr<SlangRendererBox> box_renderer1_;
   std::unique_ptr<SlangRendererBox> box_renderer2_;
+  std::unique_ptr<SlangRendererTexture> texture_renderer1_;
+  std::unique_ptr<SlangRendererTexture> texture_renderer2_;
   bool is_reverse_z_{false};
+  bool is_texture_composition_{true};
 
   Impl(std::shared_ptr<SlangContext> context) : context_(context) {
-    // Create depth texture
-    {
-      auto device = context_->GetDevice();
-      auto surface_size_ = context_->GetSurfaceSize();
+    auto device = context_->GetDevice();
+    auto surface_size_ = context_->GetSurfaceSize();
 
-      rhi::TextureDesc depth_desc{};
-      depth_desc.type = rhi::TextureType::Texture2D;
-      depth_desc.size.width = surface_size_.width;
-      depth_desc.size.height = surface_size_.height;
-      depth_desc.size.depth = 1;
-      depth_desc.format = rhi::Format::D32Float;
-      depth_desc.usage = rhi::TextureUsage::DepthStencil;
-      depth_desc.defaultState = rhi::ResourceState::DepthWrite;
-
-      CHECKSLANG(
-        device->createTexture(depth_desc, nullptr, depth_texture_.writeRef()),
-        "Failed to create depth texture");
-    }
+    // Create textures
+    intermediate_color_texture1_ = CreateColorTexture(surface_size_, "Intermediate Color Texture 1");
+    intermediate_color_texture2_ = CreateColorTexture(surface_size_, "Intermediate Color Texture 2");
+    intermediate_depth_texture1_ = CreateDepthTexture(
+      surface_size_, "Intermediate Depth Texture 1",
+      rhi::TextureUsage::DepthStencil | rhi::TextureUsage::ShaderResource);
+    intermediate_depth_texture2_ = CreateDepthTexture(
+      surface_size_, "Intermediate Depth Texture 2",
+      rhi::TextureUsage::DepthStencil | rhi::TextureUsage::ShaderResource);
+    depth_texture_ = CreateDepthTexture(surface_size_, "Depth Texture");
 
     // Create renderers
     box_renderer1_ = std::make_unique<SlangRendererBox>(context_, Vec3f{0.2f, 0.2f, 8.0f});
     box_renderer2_ = std::make_unique<SlangRendererBox>(context_, Vec3f{1.0f, 1.0f, 0.2f});
+    texture_renderer1_ = std::make_unique<SlangRendererTexture>(context_);
+    texture_renderer2_ = std::make_unique<SlangRendererTexture>(context_);
   }
 
   ~Impl() {
+  }
+
+  Slang::ComPtr<rhi::ITexture> CreateColorTexture(
+    const Size& size, const std::string_view& label = "",
+    rhi::TextureUsage usage = rhi::TextureUsage::RenderTarget | rhi::TextureUsage::ShaderResource,
+    rhi::ResourceState default_state = rhi::ResourceState::RenderTarget)
+  {
+    rhi::TextureDesc desc{};
+    desc.type = rhi::TextureType::Texture2D;
+    desc.size.width = size.width;
+    desc.size.height = size.height;
+    desc.format = context_->GetSurfaceFormat();
+    desc.usage = usage;
+    desc.defaultState = default_state;
+    desc.label = label.data();
+
+    Slang::ComPtr<rhi::ITexture> texture;
+    CHECKSLANG(
+      context_->GetDevice()->createTexture(desc, nullptr, texture.writeRef()),
+      "Failed to create color texture");
+    return texture;
+  }
+
+  Slang::ComPtr<rhi::ITexture> CreateDepthTexture(
+    const Size& size, const std::string_view& label = "",
+    rhi::TextureUsage usage = rhi::TextureUsage::DepthStencil,
+    rhi::ResourceState default_state = rhi::ResourceState::DepthWrite)
+  {
+    rhi::TextureDesc desc{};
+    desc.type = rhi::TextureType::Texture2D;
+    desc.size.width = size.width;
+    desc.size.height = size.height;
+    desc.format = rhi::Format::D32Float;
+    desc.usage = usage;
+    desc.defaultState = default_state;
+    desc.label = label.data();
+
+    Slang::ComPtr<rhi::ITexture> texture;
+    CHECKSLANG(
+      context_->GetDevice()->createTexture(desc, nullptr, texture.writeRef()),
+      "Failed to create depth texture");
+    return texture;
   }
 
   void Render() {
@@ -62,26 +109,92 @@ struct SlangRendererMain::Impl {
     // Begin frame
     auto frame_context = context_->BeginFrame();
 
-    // Render box
-    {
-      Pose pose{.position = { 0.f, 0.f, -3.2f }, .orientation = { 0.f, 0.f, 0.f, 1.f } };
-      auto world = Util::ToXmMatrix(pose);
-      box_renderer1_->Render(
+    if (is_texture_composition_) {
+      // Pass 1: Render box1 into intermediate texture set 1.
+      {
+        Pose pose{.position = { 0.f, 0.f, -3.2f }, .orientation = { 0.f, 0.f, 0.f, 1.f } };
+        auto world = Util::ToXmMatrix(pose);
+        box_renderer1_->Render(
+          frame_context.command_encoder.get(),
+          intermediate_color_texture1_.get(),
+          intermediate_depth_texture1_.get(),
+          true,
+          world, view, proj);
+      }
+
+      // Pass 2: Render box2 into intermediate texture set 2.
+      {
+        Euler rotation{ .roll = XMConvertToRadians(-90.f), .pitch = 0.f, .yaw = XMConvertToRadians(180.f) };
+        auto world = Util::ToXmMatrix({0.f, 0.f, 0.f}, rotation);
+        box_renderer2_->Render(
+          frame_context.command_encoder.get(),
+          intermediate_color_texture2_.get(),
+          intermediate_depth_texture2_.get(),
+          true,
+          world, view, proj);
+      }
+
+      // Transition intermediate textures to ShaderResource / DepthRead for sampling.
+      frame_context.command_encoder->setTextureState(
+        intermediate_color_texture1_.get(), rhi::ResourceState::ShaderResource);
+      frame_context.command_encoder->setTextureState(
+        intermediate_depth_texture1_.get(), rhi::ResourceState::DepthRead);
+      frame_context.command_encoder->setTextureState(
+        intermediate_color_texture2_.get(), rhi::ResourceState::ShaderResource);
+      frame_context.command_encoder->setTextureState(
+        intermediate_depth_texture2_.get(), rhi::ResourceState::DepthRead);
+      frame_context.command_encoder->globalBarrier();
+
+      // Pass 3: Composite two intermediate textures onto the back buffer with depth.
+      texture_renderer1_->Render(
         frame_context.command_encoder.get(),
+        intermediate_color_texture1_.get(),
+        intermediate_depth_texture1_.get(),
         frame_context.render_target.get(),
         depth_texture_.get(),
-        true,
-        world, view, proj);
+        true);
+
+      texture_renderer2_->Render(
+        frame_context.command_encoder.get(),
+        intermediate_color_texture2_.get(),
+        intermediate_depth_texture2_.get(),
+        frame_context.render_target.get(),
+        depth_texture_.get(),
+        false);
+
+      // Restore intermediate textures to their default states for the next frame.
+      frame_context.command_encoder->setTextureState(
+        intermediate_color_texture1_.get(), rhi::ResourceState::RenderTarget);
+      frame_context.command_encoder->setTextureState(
+        intermediate_depth_texture1_.get(), rhi::ResourceState::DepthWrite);
+      frame_context.command_encoder->setTextureState(
+        intermediate_color_texture2_.get(), rhi::ResourceState::RenderTarget);
+      frame_context.command_encoder->setTextureState(
+        intermediate_depth_texture2_.get(), rhi::ResourceState::DepthWrite);
+      frame_context.command_encoder->globalBarrier();
     }
-    {
-      Euler rotation{ .roll = XMConvertToRadians(-90.f), .pitch = 0.f, .yaw = XMConvertToRadians(180.f) };
-      auto world = Util::ToXmMatrix({0.f, 0.f, 0.f}, rotation);
-      box_renderer2_->Render(
-        frame_context.command_encoder.get(),
-        frame_context.render_target.get(),
-        depth_texture_.get(),
-        false,
-        world, view, proj);
+    else {
+      // Render two boxes directly to back buffer
+      {
+        Pose pose{.position = { 0.f, 0.f, -3.2f }, .orientation = { 0.f, 0.f, 0.f, 1.f } };
+        auto world = Util::ToXmMatrix(pose);
+        box_renderer1_->Render(
+          frame_context.command_encoder.get(),
+          frame_context.render_target.get(),
+          depth_texture_.get(),
+          true,
+          world, view, proj);
+      }
+      {
+        Euler rotation{ .roll = XMConvertToRadians(-90.f), .pitch = 0.f, .yaw = XMConvertToRadians(180.f) };
+        auto world = Util::ToXmMatrix({0.f, 0.f, 0.f}, rotation);
+        box_renderer2_->Render(
+          frame_context.command_encoder.get(),
+          frame_context.render_target.get(),
+          depth_texture_.get(),
+          false,
+          world, view, proj);
+      }
     }
 
     // End frame
@@ -92,6 +205,8 @@ struct SlangRendererMain::Impl {
   void ReloadShader() {
     box_renderer1_->ReloadShader();
     box_renderer2_->ReloadShader();
+    texture_renderer1_->ReloadShader();
+    texture_renderer2_->ReloadShader();
   }
 };
 

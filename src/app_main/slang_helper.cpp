@@ -214,6 +214,7 @@ Slang::ComPtr<rhi::IRenderPipeline> SlangHelper::CreateRenderPipeline(
     desc.program = shader;
     desc.targetCount = 1;
     desc.targets = &color_target;
+    desc.depthStencil.format = rhi::Format::D32Float;
     desc.depthStencil.depthTestEnable = true;
     desc.depthStencil.depthWriteEnable = true;
     desc.primitiveTopology = rhi::PrimitiveTopology::TriangleList;
