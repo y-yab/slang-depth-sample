@@ -4,6 +4,7 @@
 #include "slang_helper.h"
 #include "slang_renderer_box.h"
 #include "slang_renderer_texture.h"
+#include "config.h"
 #include "utils.h"
 
 using namespace DirectX;
@@ -21,12 +22,17 @@ struct SlangRendererMain::Impl {
   std::unique_ptr<SlangRendererBox> box_renderer2_;
   std::unique_ptr<SlangRendererTexture> texture_renderer1_;
   std::unique_ptr<SlangRendererTexture> texture_renderer2_;
-  bool is_reverse_z_{false};
-  bool is_texture_composition_{true};
+  bool is_reverse_z_{};
+  bool is_texture_composition_{};
 
   Impl(std::shared_ptr<SlangContext> context) : context_(context) {
     auto device = context_->GetDevice();
     auto surface_size_ = context_->GetSurfaceSize();
+
+    // Load config
+    const auto& config = Config::GetInstance();
+    is_reverse_z_ = config.is_reverse_z_;
+    is_texture_composition_ = config.is_texture_composition_;
 
     // Create textures
     intermediate_color_texture1_ = CreateColorTexture(surface_size_, "Intermediate Color Texture 1");

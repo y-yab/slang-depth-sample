@@ -71,6 +71,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="test_config.cpp" />
     <ClCompile Include="test_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
