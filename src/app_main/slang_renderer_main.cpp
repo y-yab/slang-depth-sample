@@ -40,10 +40,10 @@ struct SlangRendererMain::Impl {
     depth_texture_ = CreateDepthTexture(surface_size_, "Depth Texture");
 
     // Create renderers
-    box_renderer1_ = std::make_unique<SlangRendererBox>(context_, Vec3f{0.2f, 0.2f, 8.0f});
-    box_renderer2_ = std::make_unique<SlangRendererBox>(context_, Vec3f{1.0f, 1.0f, 0.2f});
-    texture_renderer1_ = std::make_unique<SlangRendererTexture>(context_);
-    texture_renderer2_ = std::make_unique<SlangRendererTexture>(context_);
+    box_renderer1_ = std::make_unique<SlangRendererBox>(context_, Vec3f{0.2f, 0.2f, 8.0f}, is_reverse_z_);
+    box_renderer2_ = std::make_unique<SlangRendererBox>(context_, Vec3f{1.0f, 1.0f, 0.2f}, is_reverse_z_);
+    texture_renderer1_ = std::make_unique<SlangRendererTexture>(context_, is_reverse_z_);
+    texture_renderer2_ = std::make_unique<SlangRendererTexture>(context_, is_reverse_z_);
   }
 
   ~Impl() {

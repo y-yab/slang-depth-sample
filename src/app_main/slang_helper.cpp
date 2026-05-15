@@ -150,7 +150,8 @@ Slang::ComPtr<rhi::IRenderPipeline> SlangHelper::CreateRenderPipeline(
   const std::string_view& fs_entry_point_name,
   rhi::Format render_target_format,
   Slang::ComPtr<rhi::IInputLayout> input_layout,
-  const std::string_view& label)
+  const std::string_view& label,
+  rhi::ComparisonFunc depth_func)
 {
   // Load shader
   Slang::ComPtr<rhi::IShaderProgram> shader;
@@ -217,6 +218,7 @@ Slang::ComPtr<rhi::IRenderPipeline> SlangHelper::CreateRenderPipeline(
     desc.depthStencil.format = rhi::Format::D32Float;
     desc.depthStencil.depthTestEnable = true;
     desc.depthStencil.depthWriteEnable = true;
+    desc.depthStencil.depthFunc = depth_func;
     desc.primitiveTopology = rhi::PrimitiveTopology::TriangleList;
     desc.rasterizer.cullMode = rhi::CullMode::Back;
     if (!label.empty()) {

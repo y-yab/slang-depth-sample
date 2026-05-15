@@ -47,7 +47,8 @@ public:
     const std::string_view& fs_entry_point,
     rhi::Format render_target_format,
     Slang::ComPtr<rhi::IInputLayout> input_layout,
-    const std::string_view& label = "");
+    const std::string_view& label = "",
+    rhi::ComparisonFunc depth_func = rhi::ComparisonFunc::Less);
 
   static void ThrowException(const std::string_view& message);
   static void Diagnose(Slang::ComPtr<slang::IBlob> diagnostics);
