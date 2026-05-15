@@ -49,7 +49,9 @@ bool Config::Load(const fs::path& yaml_file) {
     auto yaml = YAML::LoadFile(yaml_file.string());
     auto root_node = yaml["slang_depth_sample"];
 
-    detail::ParseNode(root_node, "is_reverse_z", is_reverse_z_);
+    detail::ParseNode(root_node, "is_box1_reverse_z", is_box1_reverse_z_);
+    detail::ParseNode(root_node, "is_box2_reverse_z", is_box2_reverse_z_);
+    detail::ParseNode(root_node, "is_render_target_reverse_z", is_render_target_reverse_z_);
     detail::ParseNode(root_node, "is_texture_composition", is_texture_composition_);
   }
   catch (const std::exception& e) {

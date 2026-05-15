@@ -12,7 +12,9 @@ public:
   static Config& GetInstance();
   bool Load(const std::filesystem::path& yaml_file);
 
-  bool is_reverse_z_{};
+  bool is_box1_reverse_z_{};
+  bool is_box2_reverse_z_{};
+  bool is_render_target_reverse_z_{};
   bool is_texture_composition_{};
 
 private:

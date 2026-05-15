@@ -22,7 +22,9 @@ struct SlangRendererMain::Impl {
   std::unique_ptr<SlangRendererBox> box_renderer2_;
   std::unique_ptr<SlangRendererTexture> texture_renderer1_;
   std::unique_ptr<SlangRendererTexture> texture_renderer2_;
-  bool is_reverse_z_{};
+  bool is_box1_reverse_z_{};
+  bool is_box2_reverse_z_{};
+  bool is_render_target_reverse_z_{};
   bool is_texture_composition_{};
 
   Impl(std::shared_ptr<SlangContext> context) : context_(context) {
@@ -31,7 +33,9 @@ struct SlangRendererMain::Impl {
 
     // Load config
     const auto& config = Config::GetInstance();
-    is_reverse_z_ = config.is_reverse_z_;
+    is_box1_reverse_z_ = config.is_box1_reverse_z_;
+    is_box2_reverse_z_ = config.is_box2_reverse_z_;
+    is_render_target_reverse_z_ = config.is_render_target_reverse_z_;
     is_texture_composition_ = config.is_texture_composition_;
 
     // Create textures
@@ -46,10 +50,10 @@ struct SlangRendererMain::Impl {
     depth_texture_ = CreateDepthTexture(surface_size_, "Depth Texture");
 
     // Create renderers
-    box_renderer1_ = std::make_unique<SlangRendererBox>(context_, Vec3f{0.2f, 0.2f, 8.0f}, is_reverse_z_);
-    box_renderer2_ = std::make_unique<SlangRendererBox>(context_, Vec3f{1.0f, 1.0f, 0.2f}, is_reverse_z_);
-    texture_renderer1_ = std::make_unique<SlangRendererTexture>(context_, is_reverse_z_);
-    texture_renderer2_ = std::make_unique<SlangRendererTexture>(context_, is_reverse_z_);
+    box_renderer1_ = std::make_unique<SlangRendererBox>(context_, Vec3f{0.2f, 0.2f, 8.0f}, is_box1_reverse_z_);
+    box_renderer2_ = std::make_unique<SlangRendererBox>(context_, Vec3f{1.0f, 1.0f, 0.2f}, is_box2_reverse_z_);
+    texture_renderer1_ = std::make_unique<SlangRendererTexture>(context_, is_render_target_reverse_z_);
+    texture_renderer2_ = std::make_unique<SlangRendererTexture>(context_, is_render_target_reverse_z_);
   }
 
   ~Impl() {
@@ -108,9 +112,6 @@ struct SlangRendererMain::Impl {
     auto surface_size = context_->GetSurfaceSize();
     float fov = DirectX::XMConvertToRadians(90);
     auto aspect = static_cast<float>(surface_size.width) / surface_size.height;
-    auto z_near = is_reverse_z_ ? FLT_MAX : 0.1f;
-    auto z_far = is_reverse_z_ ? 0.1f : FLT_MAX;
-    auto proj = DirectX::XMMatrixPerspectiveFovLH(fov, aspect, z_near, z_far);
 
     // Begin frame
     auto frame_context = context_->BeginFrame();
@@ -118,6 +119,10 @@ struct SlangRendererMain::Impl {
     if (is_texture_composition_) {
       // Pass 1: Render box1 into intermediate texture set 1.
       {
+        auto z_near = is_box1_reverse_z_ ? FLT_MAX : 0.1f;
+        auto z_far = is_box1_reverse_z_ ? 0.1f : FLT_MAX;
+        auto proj = DirectX::XMMatrixPerspectiveFovLH(fov, aspect, z_near, z_far);
+
         Pose pose{.position = { 0.f, 0.f, -3.2f }, .orientation = { 0.f, 0.f, 0.f, 1.f } };
         auto world = Util::ToXmMatrix(pose);
         box_renderer1_->Render(
@@ -130,6 +135,10 @@ struct SlangRendererMain::Impl {
 
       // Pass 2: Render box2 into intermediate texture set 2.
       {
+        auto z_near = is_box2_reverse_z_ ? FLT_MAX : 0.1f;
+        auto z_far = is_box2_reverse_z_ ? 0.1f : FLT_MAX;
+        auto proj = DirectX::XMMatrixPerspectiveFovLH(fov, aspect, z_near, z_far);
+
         Euler rotation{ .roll = XMConvertToRadians(-90.f), .pitch = 0.f, .yaw = XMConvertToRadians(180.f) };
         auto world = Util::ToXmMatrix({0.f, 0.f, 0.f}, rotation);
         box_renderer2_->Render(
@@ -158,6 +167,7 @@ struct SlangRendererMain::Impl {
         intermediate_depth_texture1_.get(),
         frame_context.render_target.get(),
         depth_texture_.get(),
+        is_box1_reverse_z_,
         true);
 
       texture_renderer2_->Render(
@@ -166,6 +176,7 @@ struct SlangRendererMain::Impl {
         intermediate_depth_texture2_.get(),
         frame_context.render_target.get(),
         depth_texture_.get(),
+        is_box2_reverse_z_,
         false);
 
       // Restore intermediate textures to their default states for the next frame.
@@ -180,6 +191,10 @@ struct SlangRendererMain::Impl {
       frame_context.command_encoder->globalBarrier();
     }
     else {
+      auto z_near = is_render_target_reverse_z_ ? FLT_MAX : 0.1f;
+      auto z_far = is_render_target_reverse_z_ ? 0.1f : FLT_MAX;
+      auto proj = DirectX::XMMatrixPerspectiveFovLH(fov, aspect, z_near, z_far);
+
       // Render two boxes directly to back buffer
       {
         Pose pose{.position = { 0.f, 0.f, -3.2f }, .orientation = { 0.f, 0.f, 0.f, 1.f } };

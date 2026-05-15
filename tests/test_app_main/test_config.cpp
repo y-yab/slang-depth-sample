@@ -12,6 +12,8 @@ TEST(ConfigTest, LoadConfig) {
   bool result = config.Load(yaml_file);
   EXPECT_TRUE(result);
 
-  EXPECT_FALSE(config.is_reverse_z_);
+  EXPECT_TRUE(config.is_box1_reverse_z_);
+  EXPECT_FALSE(config.is_box2_reverse_z_);
+  EXPECT_TRUE(config.is_render_target_reverse_z_);
   EXPECT_TRUE(config.is_texture_composition_);
 }

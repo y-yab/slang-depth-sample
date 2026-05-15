@@ -3,6 +3,8 @@
 cbuffer Uniforms
 {
     float4x4 wvp_matrix;
+    bool is_src_reverse_z;
+    bool is_dst_reverse_z;
     Texture2D src_color_texture;
     Texture2D<float> src_depth_texture;
     SamplerState sampler;
@@ -43,6 +45,13 @@ FSOut fs_main(float2 uv: UV)
 {
     FSOut output;
     output.color = src_color_texture.Sample(sampler, uv);
-    output.depth = src_depth_texture.Sample(sampler, uv);
+    float depth = src_depth_texture.Sample(sampler, uv);
+    
+    // Convert depth value between reverse_z formats if needed
+    if (is_src_reverse_z != is_dst_reverse_z) {
+        depth = 1.0 - depth;
+    }
+    
+    output.depth = depth;
     return output;
 }
