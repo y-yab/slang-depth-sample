@@ -9,5 +9,6 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="test_utils.cpp" />
+    <ClCompile Include="test_config.cpp" />
   </ItemGroup>
 </Project>

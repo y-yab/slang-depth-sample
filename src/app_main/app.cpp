@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "app.h"
+#include "config.h"
 #include "logger_helper.h"
 #include "utils.h"
 #include "slang_context.h"
@@ -31,6 +32,11 @@ struct App::Impl : public IWindowEventHandler {
     log_desc.log_dir_ = exe_dir / "logs";
     logger_raii_ = std::make_unique<LoggerRAII>(log_desc);
     SPDLOG_INFO("App Begin");
+
+    // Load config
+    auto& config = Config::GetInstance();
+    auto yaml_file = exe_dir / "slang_depth_sample.yaml";
+    config.Load(yaml_file);
   }
   ~Impl() {
     SPDLOG_INFO("App End");

@@ -1,0 +1,5 @@
+slang_depth_sample:
+  is_box1_reverse_z: true
+  is_box2_reverse_z: false
+  is_render_target_reverse_z: true
+  is_texture_composition: true

@@ -25,12 +25,13 @@ constexpr auto kMagenta = Color{ 1.0f, 0.0f, 1.0f, 1.0f };
 struct SlangRendererBox::Impl {
   std::shared_ptr<SlangContext> context_;
   Vec3f size_;
+  bool is_reverse_z_{false};
   std::unique_ptr<SlangVertexBuffer> vertex_buffer_;
   std::unique_ptr<SlangIndexBuffer> index_buffer_;
   Slang::ComPtr<rhi::IRenderPipeline> pipeline_;
 
-  Impl(std::shared_ptr<SlangContext> context, const Vec3f& size)
-    : context_(context), size_(size)
+  Impl(std::shared_ptr<SlangContext> context, const Vec3f& size, bool is_reverse_z)
+    : context_(context), size_(size), is_reverse_z_(is_reverse_z)
   {
     // Create buffers
     vertex_buffer_ = CreateVertexBuffer();
@@ -51,7 +52,8 @@ struct SlangRendererBox::Impl {
       shader_dir / "box.slang", "vs_main", "fs_main",
       context_->GetSurfaceFormat(),
       vertex_buffer_->GetInputLayout(),
-      "Box Renderer Pipeline");
+      "Box Renderer Pipeline",
+      is_reverse_z_ ? rhi::ComparisonFunc::Greater : rhi::ComparisonFunc::Less);
   }
 
   std::unique_ptr<SlangVertexBuffer> CreateVertexBuffer() {
@@ -144,6 +146,7 @@ struct SlangRendererBox::Impl {
     depth_attachment.view = depth_target->getDefaultView();
     depth_attachment.depthLoadOp = clear_attachments ? rhi::LoadOp::Clear : rhi::LoadOp::Load;
     depth_attachment.depthStoreOp = rhi::StoreOp::Store;
+    depth_attachment.depthClearValue = is_reverse_z_ ? 0.0f : 1.0f;
 
     rhi::RenderPassDesc render_desc{};
     render_desc.colorAttachmentCount = 1;
@@ -183,8 +186,8 @@ struct SlangRendererBox::Impl {
 };
 
 SlangRendererBox::SlangRendererBox(
-  std::shared_ptr<SlangContext> context, const Vec3f& size)
-  : impl_{ std::make_unique<Impl>(context, size) }
+  std::shared_ptr<SlangContext> context, const Vec3f& size, bool is_reverse_z)
+  : impl_{ std::make_unique<Impl>(context, size, is_reverse_z) }
 {
 }
 

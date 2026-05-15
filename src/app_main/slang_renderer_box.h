@@ -22,7 +22,7 @@ class SlangContext;
 class SlangRendererBox : public NonCopyable {
 public:
   SlangRendererBox() = delete;
-  SlangRendererBox(std::shared_ptr<SlangContext> context, const Vec3f& size);
+  SlangRendererBox(std::shared_ptr<SlangContext> context, const Vec3f& size, bool is_reverse_z);
   ~SlangRendererBox();
 
   void Render(

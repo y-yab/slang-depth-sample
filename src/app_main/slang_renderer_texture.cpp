@@ -21,12 +21,15 @@ constexpr float kIdentity[] = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }
 
 struct SlangRendererTexture::Impl {
   std::shared_ptr<SlangContext> context_;
+  bool is_dst_reverse_z_{};
   std::unique_ptr<SlangVertexBuffer> vertex_buffer_;
   std::unique_ptr<SlangIndexBuffer> index_buffer_;
   Slang::ComPtr<rhi::IRenderPipeline> pipeline_;
   Slang::ComPtr<rhi::ISampler> sampler_;
 
-  Impl(std::shared_ptr<SlangContext> context) : context_(context) {
+  Impl(std::shared_ptr<SlangContext> context, bool is_reverse_z)
+    : context_(context), is_dst_reverse_z_(is_reverse_z)
+  {
     // Create buffers
     vertex_buffer_ = CreateVertexBuffer();
     index_buffer_ = CreateIndexBuffer();
@@ -55,7 +58,8 @@ struct SlangRendererTexture::Impl {
       shader_dir / "draw_texture.slang", "vs_main", "fs_main",
       context_->GetSurfaceFormat(),
       vertex_buffer_->GetInputLayout(),
-      "Texture Renderer Pipeline");
+      "Texture Renderer Pipeline",
+      is_dst_reverse_z_ ? rhi::ComparisonFunc::Greater : rhi::ComparisonFunc::Less);
   }
 
   std::unique_ptr<SlangVertexBuffer> CreateVertexBuffer() {
@@ -84,6 +88,7 @@ struct SlangRendererTexture::Impl {
     rhi::ITexture* src_depth_texture,
     rhi::ITexture* render_target,
     rhi::ITexture* depth_target,
+    bool is_src_reverse_z,
     bool clear_attachments)
   {
     auto rt_size = render_target->getDesc().size;
@@ -99,6 +104,7 @@ struct SlangRendererTexture::Impl {
     depth_attachment.view = depth_target->getDefaultView();
     depth_attachment.depthLoadOp = clear_attachments ? rhi::LoadOp::Clear : rhi::LoadOp::Load;
     depth_attachment.depthStoreOp = rhi::StoreOp::Store;
+    depth_attachment.depthClearValue = is_dst_reverse_z_ ? 0.0f : 1.0f;
 
     rhi::RenderPassDesc render_desc{};
     render_desc.colorAttachmentCount = 1;
@@ -111,6 +117,8 @@ struct SlangRendererTexture::Impl {
 
       rhi::ShaderCursor cursor(shader_object);
       cursor["Uniforms"]["wvp_matrix"].setData(detail::kIdentity, sizeof(float) * 16);
+      cursor["Uniforms"]["is_src_reverse_z"].setData(&is_src_reverse_z, sizeof(bool));
+      cursor["Uniforms"]["is_dst_reverse_z"].setData(&is_dst_reverse_z_, sizeof(bool));
       cursor["Uniforms"]["src_color_texture"].setBinding(src_color_texture->getDefaultView());
       cursor["Uniforms"]["src_depth_texture"].setBinding(src_depth_texture->getDefaultView());
       cursor["Uniforms"]["sampler"].setBinding(sampler_);
@@ -138,8 +146,8 @@ struct SlangRendererTexture::Impl {
   }
 };
 
-SlangRendererTexture::SlangRendererTexture(std::shared_ptr<SlangContext> context)
-  : impl_{ std::make_unique<Impl>(context) }
+SlangRendererTexture::SlangRendererTexture(std::shared_ptr<SlangContext> context, bool is_reverse_z)
+  : impl_{ std::make_unique<Impl>(context, is_reverse_z) }
 {
 }
 
@@ -152,6 +160,7 @@ void SlangRendererTexture::Render(
     rhi::ITexture* src_depth_texture,
     rhi::ITexture* render_target,
     rhi::ITexture* depth_target,
+    bool is_src_reverse_z,
     bool clear_attachments)
 {
   impl_->Render(
@@ -160,6 +169,7 @@ void SlangRendererTexture::Render(
     src_depth_texture,
     render_target,
     depth_target,
+    is_src_reverse_z,
     clear_attachments);
 }
 

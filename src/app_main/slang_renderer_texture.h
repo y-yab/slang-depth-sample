@@ -22,7 +22,7 @@ class SlangContext;
 class SlangRendererTexture : public NonCopyable {
 public:
   SlangRendererTexture() = delete;
-  SlangRendererTexture(std::shared_ptr<SlangContext> context);
+  SlangRendererTexture(std::shared_ptr<SlangContext> context, bool is_reverse_z);
   ~SlangRendererTexture();
 
   void Render(
@@ -31,6 +31,7 @@ public:
     rhi::ITexture* src_depth_texture,
     rhi::ITexture* render_target,
     rhi::ITexture* depth_target,
+    bool is_src_reverse_z,
     bool clear_attachments);
   void ReloadShader();
 
